@@ -10,3 +10,6 @@
 using namespace std;
 
 #define MAX_N 20000
+#define MST_1 1
+#define TSP2 2
+#define TSP1_5 3
