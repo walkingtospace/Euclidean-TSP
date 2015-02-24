@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Point.h"
+#include "MST.h"
 
 int main() {
 	set< pair<int,int> > generatedPointset;
@@ -20,6 +21,9 @@ int main() {
 	adjacentMatrix = pointset.getAdjacentMatrix();
 
 	//Deliverable A: From pointset and adjacentMatrix, you should construct MST with Prim or Kruskal
+	MST mst(adjacentMatrix, N);
+	mst.makeTree();
+	mst.printMST();
 	
 	//Deliverable B: Find TSP2 path from the constructed MST
 
