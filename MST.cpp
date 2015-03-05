@@ -1,6 +1,6 @@
 #include "MST.h"
 
-MST::MST(int** input, int size) {
+MST::MST(float** input, int size) {
 	adjacentMatrix = input;
 	key = new int[size];   
     mstSet = new bool[size];  

@@ -4,13 +4,13 @@
 
 class MST {
 public:
-	int** adjacentMatrix;
+	float** adjacentMatrix;
 	int* parent; //Array to store constructed MST
 	int* key; //Key values used to pick minimum weight edge in cut
 	bool* mstSet; //To represent set of vertices not yet included in MST
 	int N; //the size of pointset
 
-	MST(int** adjacentMatrix, int size);
+	MST(float** adjacentMatrix, int size);
 	~MST();
 
 	//deliverable a

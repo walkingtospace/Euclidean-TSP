@@ -35,10 +35,10 @@ void Point::generatePoint(unsigned int H, unsigned int W, unsigned int N) {
 		pointset.insert(point);
 	}
 	
-	adjacentMatrix = (int**)calloc(N, sizeof(int *));
+	adjacentMatrix = (float**)calloc(N, sizeof(float *));
 
 	for(int i=0; i<N ; ++i) {
-		adjacentMatrix[i] = (int*)calloc(N, sizeof(int));
+		adjacentMatrix[i] = (float*)calloc(N, sizeof(float));
 	}
 
 	for(set< pair<int, int> >::iterator it = pointset.begin() ; it != pointset.end() ; ++it, ++row) {
@@ -77,7 +77,7 @@ void Point::printPointset() {
 	 }
 }
 
-int Point::getEuclideanDistance(int x1, int y1, int x2, int y2) {
+float Point::getEuclideanDistance(int x1, int y1, int x2, int y2) {
 	
 	return sqrt(pow((double)(x1-x2),2) + pow((double)(y1-y2),2));
 }
@@ -87,7 +87,7 @@ set< pair<int,int> > Point::getPointset() {
 	return pointset;
 }
 
-int** Point::getAdjacentMatrix() {
+float** Point::getAdjacentMatrix() {
 
 	return adjacentMatrix;
 }

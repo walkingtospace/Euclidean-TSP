@@ -22,7 +22,7 @@ sourcecode : pub.ist.ac.at/~vnk/software/blossom5-v2.05.src.tar.gz
 
 */
 
-void LoadInput(int& node_num, int& edge_num, int*& edges, int*& weights, int** adjacentMatrix, int N) {
+void LoadInput(int& node_num, int& edge_num, int*& edges, int*& weights, float** adjacentMatrix, int N) {
 	int e = 0;
 	node_num = N;
 	edge_num = N*(N-1)/2 ; //complete graph
@@ -57,7 +57,7 @@ void PrintMatching(int node_num, PerfectMatching* pm) {
 
 int main() {
 	set< pair<int,int> > generatedPointset;
-	int** adjacentMatrix;
+	float** adjacentMatrix;
 	int W, H, N;
 	Point pointset;
 
