@@ -15,7 +15,7 @@ void Point::generatePoint(unsigned int H, unsigned int W, unsigned int N) {
 		cout<<"W,H,N should be less than "<<MAX_N<<endl;
 
 		return;
-	} else if(N > H && N > W) {
+	} else if(N > W + H) {
 		cout<<"N should be less than H or W"<<endl;
 
 		return;
@@ -24,13 +24,14 @@ void Point::generatePoint(unsigned int H, unsigned int W, unsigned int N) {
 	pointNum = N;
 
 	//uniform distrubution generation
-	std::default_random_engine x_generator;
-	std::default_random_engine y_generator;
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+	std::default_random_engine generator(seed);
 	std::uniform_int_distribution<int> x_distribution(0,H);
 	std::uniform_int_distribution<int> y_distribution(0,W);
 
 	while(pointset.size() <= N-1) {
-		pair<int,int> point(x_distribution(x_generator), y_distribution(x_generator));
+		pair<int,int> point(x_distribution(generator), y_distribution(generator));
 		pointset.insert(point);
 	}
 	

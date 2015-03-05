@@ -68,7 +68,7 @@ int main() {
 	cout<<"W: "<<W<<" H: "<<H<<" N:"<<N<<endl;
 
 	pointset.generatePoint(W, H, N); //max(W,H,N) should be < 20000 because of memory limitation
-	//pointset.printPointset();
+	pointset.printPointset();
 
 	generatedPointset = pointset.getPointset();
 	adjacentMatrix = pointset.getAdjacentMatrix();
