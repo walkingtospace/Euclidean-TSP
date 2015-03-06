@@ -15,8 +15,8 @@ void Point::generatePoint(unsigned int H, unsigned int W, unsigned int N) {
 		cout<<"W,H,N should be less than "<<MAX_N<<endl;
 
 		return;
-	} else if(N > W + H) {
-		cout<<"N should be less than H or W"<<endl;
+	} else if(N > W * H) {
+		cout<<"N should be less than H * W"<<endl;
 
 		return;
 	}
