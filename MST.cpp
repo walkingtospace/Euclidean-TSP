@@ -68,36 +68,6 @@ void MST::printMST() {
 	}
 }
 
-//calculate mean of all edges in the MST
-float MST::calMean(int option) {
-	float mean = 0.0;
-
-	if(option == MST_1) {
-		//calculate
-	}else if(option == TSP2) {
-
-	} else if(option == TSP1_5) {
-
-	}
-
-	return mean;
-}
-
-//calculate standard deviation of all edges in the MST
-float MST::calStd(int option) {
-	float std = 0.0;
-
-	if(option == MST_1) {
-		//calculate
-	}else if(option == TSP2) {
-
-	} else if(option == TSP1_5) {
-
-	}
-
-	return std;
-}
-
 void MST::makeTSP2() {
 	//make a Eulerian tour by DFS
 
