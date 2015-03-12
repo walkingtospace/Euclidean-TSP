@@ -22,9 +22,6 @@ public:
 
 	//deliverable c
 	void makeTSP1_5();
-	
-	float calMean(int option);
-	float calStd(int option);
 
 private:
 	void minimumMatching();
