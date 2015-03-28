@@ -18,6 +18,17 @@ the MST of the pointset, shortcut a Eulerian tour of the union of the edges of t
 the MST of the pointset, and return the resulting heuristic TSP cost, CT SP 1p5. Please refer to the
 1.5-approximation overview at this link[click]
 
+• Write code for the 2OPT-E local improvement heuristic, which iteratively finds a pair of edges to
+remove from the current TSP tour, such that reconnecting the remaining paths back into a cycle
+(i.e., a new TSP tour of the same N points) has reduced cost. The 2OPT-E heuristic terminates
+when no pair of edges can be found to further reduce the TSP cost.
+
+• Write code for the 2OPT-P local improvement heuristic, which iteratively finds a pair of points
+whose positions in the current TSP tour can be swapped, such that the new tour (i.e., a new TSP
+tour of the same N points) has reduced cost. The 2OPT-P heuristic terminates when no pair of
+points can be found to further reduce the TSP cost.
+
+
 ------------------------------------------
 
 How to execute: 
