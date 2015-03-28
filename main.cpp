@@ -22,19 +22,18 @@ sourcecode : pub.ist.ac.at/~vnk/software/blossom5-v2.05.src.tar.gz
 
 */
 
-void LoadInput(int& node_num, int& edge_num, int*& edges, int*& weights, float** adjacentMatrix, int N) {
+void LoadInput(int edge_num, int*& edges, int*& weights, float** adjacentMatrix, set<int>* oddDegree) {
 	int e = 0;
-	node_num = N;
-	edge_num = N*(N-1)/2 ; //complete graph
+	vector<int> v(oddDegree->begin(), oddDegree->end());
 
 	edges = new int[2*edge_num];
 	weights = new int[edge_num];
 
-	for(int i = 0; i < N ; ++i) {
-		for(int j = i+1 ; j< N ; ++j) {
-			edges[2*e] = i;
-			edges[2*e+1] = j;
-			weights[e] = adjacentMatrix[i][j];
+	for(int i=0; i< v.size() ; ++i) {
+		for(int j=i+1; j< v.size() ; ++j) {
+			edges[2*e] = i; //order
+			edges[2*e+1] = j; //order
+			weights[e] = adjacentMatrix[v[i]][v[j]];
 			e++;
 		}
 	}
@@ -46,69 +45,219 @@ void LoadInput(int& node_num, int& edge_num, int*& edges, int*& weights, float**
 	}
 }
 
-void PrintMatching(int node_num, PerfectMatching* pm) {
+void PrintMatching(int node_num, PerfectMatching* pm, set<int>* oddDegree) {
 	int i, j;
+	vector<int> v(oddDegree->begin(), oddDegree->end());
+
+	printf("Perfect minimum-weight matching: \n");
+	for (i=0; i<node_num; i++) {
+		j = pm->GetMatch(i);
+		if (i < j) printf("%d %d\n", v[i], v[j]);
+	}
+
+	printf("\n");
+}
+
+void copyPerfactMatching(int node_num, vector<pair<int, int>>* pmPair, PerfectMatching* pm, set<int>* oddDegree) {
+	int i, j;
+	vector<int> v(oddDegree->begin(), oddDegree->end());
 
 	for (i=0; i<node_num; i++) {
 		j = pm->GetMatch(i);
-		if (i < j) printf("%d %d\n", i, j);
+		if (i < j) {
+			pmPair->push_back(pair<int,int>(v[i], v[j]));
+		}
 	}
 }
 
 int main() {
-	set< pair<int,int> > generatedPointset;
-	float** adjacentMatrix;
-	int W, H, N;
-	Point pointset;
+	vector<double> mstCosts;
+	vector<double> TSP2Costs;
+	vector<double> TSP1p5Costs;
+	vector<double> OPT_ECosts;
+	float MSTmax = 0;
+	float MSTmin = 99999999;
+	float TSP2max = 0;
+	float TSP2min = 9999999;
+	float TSP1_5max = 0;
+	float TSP1_5min = 99999999;
 
-	W = 5000;
-	H = 3000;
-	N = 7000;
+	for(int NumOfTrial = 0; NumOfTrial < 10 ; ++NumOfTrial) { // trials
+		
+		Point pointset;
+		vector<pair<int, int>> perfectMatching;
+		int W, H, N;
+		float** adjacentMatrix;
 
-	cout<<"W: "<<W<<" H: "<<H<<" N:"<<N<<endl;
+		W = 19000;
+		H = 13000;
+		N = 8000;
 
-	pointset.generatePoint(W, H, N); //max(W,H,N) should be < 20000 because of memory limitation
-	//pointset.printPointset();
+		cout<<"W: "<<W<<" H: "<<H<<" N:"<<N<<endl;
 
-	generatedPointset = pointset.getPointset();
-	adjacentMatrix = pointset.getAdjacentMatrix();
+		pointset.generatePoint(W, H, N); //max(W,H,N) should be < 20000 because of memory limitation
+		//pointset.printPointset();
 
-	//Deliverable A: From pointset and adjacentMatrix, you should construct MST with Prim or Kruskal
-	MST mst(adjacentMatrix, N);
-	mst.makeTree();
-	//mst.printMST();
-	
+		adjacentMatrix = pointset.getAdjacentMatrix();
 
-	//Deliverable B: Find TSP2 path from the constructed MST
-	//You won't need any wrappers for B.
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		//Deliverable A: From pointset and adjacentMatrix, you should construct MST with Prim or Kruskal
+		MST mst(adjacentMatrix, N);
+		mst.makeTree();
+
+		double mst_cost = mst.calCost(MST_1);
+		cout<<"MST Cost : "<<mst_cost<<endl;
+		mstCosts.push_back(mst_cost);
+		//mst.printMST();
+		if(MSTmax < mst_cost) MSTmax = mst_cost;
+		if(MSTmin > mst_cost) MSTmin = mst_cost;
 
 
-	//Deliverable C: Find TSP1.5 path from the constructed MST
-	
-	//Find the perfect minimum-weight matching 
-	struct PerfectMatching::Options options;
-	int i, e, node_num = N, edge_num = N*(N-1)/2;
-	int* edges;
-	int* weights;
-	PerfectMatching *pm = new PerfectMatching(node_num, edge_num);
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		//Deliverable B: Find TSP2 path from the constructed MST
+		mst.makeTSP2();
+		//mst.printTSP2Route();
 
-	LoadInput(node_num, edge_num, edges, weights, adjacentMatrix, N);
+		double tsp2_cost = mst.calCost(TSP2);
+		cout<<"TSP2 Cost : "<<tsp2_cost<<endl;
+		TSP2Costs.push_back(tsp2_cost);
 
-	for (e=0; e<edge_num; e++) {
-		pm->AddEdge(edges[2*e], edges[2*e+1], weights[e]);
+		if(TSP2max < tsp2_cost) TSP2max = tsp2_cost;
+		if(TSP2min > tsp2_cost) TSP2min = tsp2_cost;
+
+
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		//Deliverable C: Find TSP1.5 path from the constructed MST
+		
+		//Find the perfect minimum-weight matching 
+		struct PerfectMatching::Options options;
+		int i, e, node_num = N, edge_num = N*(N-1)/2;
+		int* edges;
+		int* weights;
+		set<int> oddDegree;
+		
+		oddDegree = mst.getOddDegree(); //return vector<pair<int,int>>
+		node_num = oddDegree.size();
+		edge_num = node_num*(node_num-1)/2; //always even
+
+		PerfectMatching *pm = new PerfectMatching(node_num, edge_num);
+
+		LoadInput(edge_num, edges, weights, adjacentMatrix, &oddDegree);
+
+		for (e=0; e<edge_num; e++) {
+			pm->AddEdge(edges[2*e], edges[2*e+1], weights[e]);
+		}
+
+		pm->options = options;
+		pm->Solve();
+		//PrintMatching(node_num, pm, &oddDegree);
+
+		double cost = ComputePerfectMatchingCost(node_num, edge_num, edges, weights, pm);
+		printf("Total cost of the perfect min-weight matching = %.1f\n", cost);
+		
+		copyPerfactMatching(node_num, &perfectMatching, pm, &oddDegree);
+
+		mst.makeTSP1p5(&perfectMatching);
+		//mst.printTSP1p5Route();
+
+		double tsp1p5_cost = mst.calCost(TSP1_5);
+		cout<<"TSP1p5 Cost : "<<tsp1p5_cost<<endl;
+		TSP1p5Costs.push_back(tsp1p5_cost);
+
+		if(TSP1_5max < tsp1p5_cost) TSP1_5max = tsp1p5_cost;
+		if(TSP1_5min > tsp1p5_cost) TSP1_5min = tsp1p5_cost;
+
+		delete pm;
+		delete [] edges;
+		delete [] weights;
+
+		///////////////////////////////////////////////////////////////////////////////////////////////
+		//Extra Credit 1: 2OPT-E 
+
+		//mst.make2OPT_E();
+		//mst.print2OPT_E();
+
+		//double OPT_E_cost = mst.calCost(OPT_E);
+	//	cout<<"2OPT-E Cost : "<<OPT_E_cost<<endl;
+	//	OPT_ECosts.push_back(OPT_E_cost);
 	}
 
-	pm->options = options;
-	pm->Solve();
+	//////////////////////////////////last statistics////////////////////////////////////////////////
+	double mstMean = 0;
+	double mstStd = 0;
+	double var = 0;
 
-	double cost = ComputePerfectMatchingCost(node_num, edge_num, edges, weights, pm);
-	printf("Total cost of the perfect min-weight matching = %.1f\n", cost);
-	
-	PrintMatching(node_num, pm);
+	for(int i=0; i<mstCosts.size() ; ++i){
+		mstMean += mstCosts[i];
+		var += pow(mstCosts[i], 2);
+	}
 
-	delete pm;
-	delete [] edges;
-	delete [] weights;
-	
+	mstMean /= mstCosts.size();
+	var /= mstCosts.size();
+
+	mstStd = sqrt(var - pow(mstMean,2));
+
+	double TSP2Mean = 0;
+	double TSP2Std = 0;
+	var = 0;
+
+	for(int i=0; i<TSP2Costs.size() ; ++i){
+		TSP2Mean += TSP2Costs[i];
+		var += pow(TSP2Costs[i], 2);
+	}
+
+	TSP2Mean /= TSP2Costs.size();
+	var /= TSP2Costs.size();
+
+	TSP2Std = sqrt(var - pow(TSP2Mean,2));
+
+	double TSP1p5Mean = 0;
+	double TSP1p5Std = 0;
+	var = 0;
+
+	for(int i=0; i<TSP1p5Costs.size() ; ++i){
+		TSP1p5Mean += TSP1p5Costs[i];
+		var += pow(TSP1p5Costs[i], 2);
+	}
+
+	TSP1p5Mean /= TSP1p5Costs.size();
+	var /= TSP1p5Costs.size();
+
+	TSP1p5Std = sqrt(var - pow(TSP1p5Mean,2));
+/*
+	double OPT_EMean = 0;
+	double OPT_EStd = 0;
+	var = 0;
+
+	for(int i=0; i<OPT_ECosts.size() ; ++i){
+		OPT_EMean += OPT_ECosts[i];
+		var += pow(OPT_ECosts[i], 2);
+	}
+
+	OPT_EMean /= OPT_ECosts.size();
+	var /= OPT_ECosts.size();
+
+	OPT_EStd = sqrt(var - pow(OPT_EMean,2));
+*/
+	cout<<"**********************************************"<<endl;
+	cout<<"Mean MST: "<<mstMean<<endl;
+	cout<<"Std. Dev. MST: "<<mstStd<<endl;
+	cout<<"MAX MST: "<<MSTmax<<"Improvement: "<<(abs((MSTmax-mstMean))*100)/mstMean<<endl;
+	cout<<"Min MST: "<<MSTmin<<"Improvement: "<<(abs((MSTmin-mstMean))*100)/mstMean<<endl;
+
+	cout<<"Mean TSP2: "<<TSP2Mean<<endl;
+	cout<<"Std. Dev. TSP2: "<<TSP2Std<<endl;
+	cout<<"MAX TSP2: "<<TSP2max<<"Improvement: "<<(abs((TSP2max-TSP2Mean))*100)/TSP2Mean<<endl;
+	cout<<"MIN TSP2: "<<TSP2min<<"Improvement: "<<(abs((TSP2min-TSP2Mean))*100)/TSP2Mean<<endl;
+
+	cout<<"Mean TSP1.5: "<<TSP1p5Mean<<endl;
+	cout<<"Std. Dev. TSP1.5: "<<TSP1p5Std<<endl;
+
+	cout<<"MAX TSP1.5: "<<TSP1_5max<<"Improvement: "<<(abs((TSP1_5max-TSP1p5Mean))*100)/TSP1p5Mean<<endl;
+	cout<<"MIN TSP1.5: "<<TSP1_5min<<"Improvement: "<<(abs((TSP1_5min-TSP1p5Mean))*100)/TSP1p5Mean<<endl;
+
+//	cout<<"Mean 2OPT-E: "<<OPT_EMean<<endl;
+//	cout<<"Std. Dev. 2OPT-E: "<<OPT_EStd<<endl;
+
 	return 0;
 }
