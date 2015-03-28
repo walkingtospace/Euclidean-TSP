@@ -34,7 +34,7 @@ void MST::makeTree() {
         mstSet[u] = true;
  
         // Update key value and parent index of the adjacent vertices of
-        // the picked vertex. Consider only those vertices which are not yet
+        // the picked vertex. Consi3000der only those vertices which are not yet
         // included in MST
         for (int v = 0; v < N; v++)
            // mstSet[v] is false for vertices not yet included in MST
@@ -64,35 +64,388 @@ void MST::printMST() {
 	cout<<"Minimum spanning tree from the adjacency matrix"<<endl;
 	cout<<"Edge   Weight"<<endl;
 	for (int i = 1; i < N; i++) {
-		cout<<parent[i]<<" - "<<i<<"  "<<adjacentMatrix[i][parent[i]]<<endl;
+		cout<<parent[i]<<" - "<<i<<"  "<<adjacentMatrix[parent[i]][i]<<endl;
 	}
+}
+
+double MST::calCost(int option) {
+	double total = 0.0;
+
+	if(option == MST_1) {
+		for (int i = 1; i < N; i++) {
+			total += adjacentMatrix[parent[i]][i];
+		}
+
+		return total;
+	} else if(option == TSP2) {		
+		for(int i=0 ; i<TSPRoute.size()-1 ; ++i) {
+			total += adjacentMatrix[TSPRoute[i]][TSPRoute[i+1]];
+		}
+
+		return total;
+	} else if(option == TSP1_5) {
+		for(int i=0 ; i<TSP1p5Route.size()-1 ; ++i) {
+			total += adjacentMatrix[TSP1p5Route[i]][TSP1p5Route[i+1]];
+		}
+
+		return total;
+	} else if(option == OPT_E) {
+		for(int i=0 ; i<OPT_E_Route.size()-1 ; ++i) {
+			total += adjacentMatrix[OPT_E_Route[i]][OPT_E_Route[i+1]];
+		}
+
+		return total;
+	}
+}
+
+//calculate mean of all edges in the MST
+double MST::calMean(int option) {
+	double mean = 0.0;
+	double total = 0;
+
+	if(option == MST_1) {
+		for (int i = 1; i < N; i++) {
+			total += adjacentMatrix[parent[i]][i];
+		}
+
+		return total/(N-1);
+	} else if(option == TSP2) {		
+		for(int i=0 ; i<TSPRoute.size()-1 ; ++i) {
+			total += adjacentMatrix[TSPRoute[i]][TSPRoute[i+1]];
+		}
+
+		return total/(TSPRoute.size());
+	} else if(option == TSP1_5) {
+		for(int i=0 ; i<TSP1p5Route.size()-1 ; ++i) {
+			total += adjacentMatrix[TSP1p5Route[i]][TSP1p5Route[i+1]];
+		}
+
+		return total/(TSP1p5Route.size());
+
+	}
+}
+
+//calculate standard deviation of all edges in the MST
+double MST::calStd(int option) {
+	double std = 0.0;
+	double total;
+	double mean;
+
+	if(option == MST_1) {
+		mean = pow((double)calMean(MST_1),2);
+
+		for (int i = 1; i < N; i++) {
+			total += pow((double)adjacentMatrix[parent[i]][i], 2);
+		}
+
+		total /= (N-1);
+	} else if(option == TSP2) {
+		mean = pow((double)calMean(TSP2),2);
+
+		for(int i=0 ; i<TSPRoute.size()-1 ; ++i) {
+			total += pow((double)adjacentMatrix[TSPRoute[i]][TSPRoute[i+1]],2);
+		}
+
+		total /= (TSPRoute.size());
+	} else if(option == TSP1_5) {
+		mean = pow((double)calMean(TSP1_5),2);
+
+		for(int i=0 ; i<TSP1p5Route.size()-1 ; ++i) {
+			total += pow((double)adjacentMatrix[TSP1p5Route[i]][TSP1p5Route[i+1]],2);
+		}
+
+		total /= (TSP1p5Route.size());
+	}
+
+
+	return sqrt(total - mean);
 }
 
 void MST::makeTSP2() {
 	//make a Eulerian tour by DFS
+	multimap<int, int> rel;
+	stack<int> st;
+	int visited[N];
+
+	visited[0] = 0;
+	for (int i = 1; i < N; i++) {
+		rel.insert(pair<int,int>(parent[i], i));
+		rel.insert(pair<int,int>(i, parent[i]));
+		visited[i] = 0;
+	}
 
 	//add shortcuts if a vertex has no detours.
+	st.push(parent[1]); //first node
+	while(st.empty() != true) {
+		int node = st.top();
+		int children = findNotVisited(node, &rel, visited);
 
-	//calculate heuristic TSP cost
+		if(visited[node] == 0) {
+			TSPRoute.push_back(node);
+		} 
+		
+		visited[node] = 1;			
+		
+		if(children == -1) {
+			st.pop();
+
+		} else {
+			st.push(children);
+		}
+	}
+
+	TSPRoute.push_back(parent[1]);
 }
 
-void MST::makeTSP1_5() {
+void MST::printTSP2Route() {
+	cout<<"Heuristic TSP2 route"<<endl;
+	for(int i=0 ; i<TSPRoute.size() ; ++i) {
+		cout<<TSPRoute[i]<<"  ";
+	}
+	cout<<endl;
+}
+
+set<int> MST::getOddDegree() {
+	multimap<int, int> mst;	
+	set<int> OddSet;
+	pair <multimap<int,int>::iterator, multimap<int,int>::iterator> ret;
+
+	for (int i = 1; i < N; i++) {
+		mst.insert(pair<int,int>(parent[i], i));
+		mst.insert(pair<int,int>(i, parent[i]));
+	}
+
+	for(multimap<int,int>::iterator it = mst.begin() ; it != mst.end() ; ++it) {
+		int count = mst.count(it->first);
+
+		if(count % 2 == 1) {
+			//cout<<"odd: "<<it->first<<endl;
+			OddSet.insert(it->first);
+		}
+	}
+
+	return OddSet;
+}
+
+void MST::makeTSP1p5(vector<pair<int, int>>* perfectMatching) {
+	multimap<int, int> EulerPath;	
+	stack<int> st;
+	int visited[N];
+
+	for (int i = 1; i < N; i++) {
+		EulerPath.insert(pair<int,int>(parent[i], i));
+		EulerPath.insert(pair<int,int>(i, parent[i]));
+		visited[i] = 0;
+	}
+
+	for(int i=0; i< perfectMatching->size() ; ++i) {
+		EulerPath.insert(pair<int,int>(perfectMatching->at(i).first, perfectMatching->at(i).second));
+		EulerPath.insert(pair<int,int>(perfectMatching->at(i).second, perfectMatching->at(i).first));
+	}
+
+	int node = parent[1];
+
+	//find Euler path
+	while(1) {
+		int neighbor = findNotVisitedEdge(node, &EulerPath);	
 	
-	//construct minimum-weight-matching for the given MST
-	minimumMatching();
+		if(neighbor == -1) {
+			TSP1p5Route.push_back(node);
 
-	//make all edges has even degree by combining mimimum-weight matching and MST
-	combine();
+			if(st.empty() == true) break; //one node 
 
-	//calculate heuristic TSP cost 
+			node = st.top();
+			st.pop();
+		} else {
+			//delete Edge
+			deleteEdge(node, neighbor, &EulerPath);
+			st.push(node);
+
+			node = neighbor;
+		}
+
+		if(st.empty() == true) break;
+	}
+
+	TSP1p5Route.push_back(parent[1]);
+
+	//add Shorcut for twice visited nodes.
+	for(int i=0; i<TSP1p5Route.size() ; ++i) {
+		if(visited[TSP1p5Route[i]] == 1) {
+			for(int j=i; j<TSP1p5Route.size() ; ++j) {
+				if(visited[TSP1p5Route[j]] == 0) {
+
+					break;
+				} else {
+					TSP1p5Route[j] = -1;
+				}
+			}
+		} else {
+			visited[TSP1p5Route[i]] = 1;
+		}
+	}
+
+	TSP1p5Route.push_back(parent[1]);
+
+	vector<int> temp = TSP1p5Route;
+	TSP1p5Route.clear();
+
+	for(int i=0; i<temp.size() ; ++i) {
+		if(temp[i] != -1) TSP1p5Route.push_back(temp[i]);
+	}
 }
 
-void MST::minimumMatching() { //if you choose O(n^2)
-	//find minimum-weight matching for the MST. 
-	
-	//you should carefully choose a matching algorithm to optimize the TSP cost.
+void MST::printTSP1p5Route() {
+	cout<<"Heuristic TSP1p5 route"<<endl;
+	for(int i=0 ; i<TSP1p5Route.size() ; ++i) {
+		cout<<TSP1p5Route[i]<<"  ";
+	}
+	cout<<endl;
 }
 
-void MST::combine() {
-	//combine minimum-weight matching with the MST to get a multigraph which has vertices with even degree
+int MST::findNotVisited(int node, multimap<int,int>* rel, int* visited) {
+	multimap<int,int>::iterator it = rel->find(node);
+	pair <multimap<int,int>::iterator, multimap<int,int>::iterator> ret;
+
+	if( it != rel->end() ) {
+		ret = rel->equal_range(it->first);
+
+		for(it = ret.first ; it != ret.second ; ++it) {
+			if(visited[it->second] == 0) {
+
+				return it->second;
+			}
+		}
+	} else {
+
+		return -1;
+	}
+
+	return -1;
+}
+
+int MST::findNotVisitedEdge(int node, multimap<int, int>* rel) {
+	multimap<int,int>::iterator it = rel->find(node);
+
+	if( it != rel->end() ) {
+		return it->second;
+	} else {
+		return -1;
+	}
+}
+
+void MST::deleteEdge(int node, int neighbor, multimap<int, int>* rel) {
+	multimap<int,int>::iterator it = rel->find(node);
+	pair <multimap<int,int>::iterator, multimap<int,int>::iterator> ret;
+
+	if( it != rel->end() ) {
+		ret = rel->equal_range(it->first);
+
+		for(it = ret.first ; it != ret.second ; ++it) {
+			if(it->second == neighbor) {
+				rel->erase(it);
+
+				break;
+			}
+		}
+	} 
+
+	it = rel->find(neighbor);
+
+	if( it != rel->end() ) {
+		ret = rel->equal_range(it->first);
+
+		for(it = ret.first ; it != ret.second ; ++it) {
+			if(it->second == node) {
+				rel->erase(it);
+
+				break;
+			}
+		}
+	} 
+}
+
+void MST::make2OPT_E() {
+	int cnt = 0;
+	int size = TSP1p5Route.size();
+	clock_t t;
+
+	while(cnt++ < size) {
+		bool isFoundNew = false;
+
+		t = clock();
+
+		if(cnt % 100 == 0) {
+			cout<<((float)t)/CLOCKS_PER_SEC<<"seconds"<<endl;
+		}
+		float best_distance = calculateTotalDistance(TSP1p5Route);
+		vector<int> temp = TSP1p5Route;
+
+		for (int i = 1; i < temp.size()-1; i++) {
+			for (int k = i + 1; k < temp.size()-1; k++) {
+				vector<int> new_route = optSwap(temp, i, k);
+
+				float new_distance = calculateTotalDistance(new_route);
+				if (new_distance < best_distance) {
+					OPT_E_Route = new_route;
+					isFoundNew = true;
+
+					break;
+				}
+			}
+
+			if(isFoundNew == true) {
+
+	    		break;
+			}
+	    }
+
+	    if(isFoundNew == false) {
+
+	    	break;
+		}
+
+		t = clock() - t;
+	} //end while
+}
+
+vector<int> MST::optSwap(vector<int> route, int i, int k) {
+	 /* 1. take route[0] to route[i-1] and add them in order to new_route
+       2. take route[i] to route[k] and add them in reverse order to new_route
+       3. take route[k+1] to end and add them in order to new_route
+       return new_route;*/
+
+		vector<int> newRoute;
+
+		for(int j=0; j<i ; ++j) {
+			newRoute.push_back(route[j]);
+		}
+
+		for(int j=k; j>=i; --j) {
+			newRoute.push_back(route[j]);
+		}
+
+		for(int j=k+1; j<route.size(); ++j) {
+			newRoute.push_back(route[j]);
+		}
+
+		return newRoute;
+}
+
+float MST::calculateTotalDistance(vector<int> input) {
+	float result = 0.0;
+
+	for(int i=0; i<input.size()-1 ; ++i) {
+		result += adjacentMatrix[input[i]][input[i+1]];
+	}
+
+	return result;
+}
+
+void MST::print2OPT_E() {
+	cout<<"Heuristic 2OPT-E route"<<endl;
+	for(int i=0 ; i<OPT_E_Route.size() ; ++i) {
+		cout<<OPT_E_Route[i]<<"  ";
+	}
+	cout<<endl;
 }
